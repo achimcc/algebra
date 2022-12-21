@@ -45,7 +45,7 @@ pub trait Bls12Config: 'static + Sized {
 
     fn multi_miller_loop(
         a: impl IntoIterator<Item = impl Into<G1Prepared<Self>>>,
-        b: impl IntoIterator<Item = impl Into<G2Prepared<Self>>>,
+        b: impl IntoIterator<Item = impl Into<G2MillerLoopInput<Self>>>,
     ) -> MillerLoopOutput<Bls12<Self>> {
         use itertools::Itertools;
 
@@ -53,7 +53,8 @@ pub trait Bls12Config: 'static + Sized {
             .into_iter()
             .zip_eq(b)
             .filter_map(|(p, q)| {
-                let (p, q) = (p.into(), q.into());
+                let q: G2MillerLoopInput<Self> = q.into();
+                let (p, q):(G1Prepared<Self>, G2Prepared<Self>) = (p.into(), q.into());
                 match !p.is_zero() && !q.is_zero() {
                     true => Some((p, q.ell_coeffs.into_iter())),
                     false => None,
@@ -161,7 +162,7 @@ pub mod g2;
 
 pub use self::{
     g1::{G1Affine, G1Prepared, G1Projective},
-    g2::{G2Affine, G2Prepared, G2Projective},
+    g2::{G2Affine, G2Prepared, G2Projective, G2MillerLoopInput},
 };
 
 #[derive(Derivative)]
@@ -209,11 +210,12 @@ impl<P: Bls12Config> Pairing for Bls12<P> {
     type G2Affine = G2Affine<P>;
     type G2Prepared = G2Prepared<P>;
     type TargetField = Fp12<P::Fp12Config>;
-    type MillerLoopInput = Self::G2Prepared;
+    type G1MillerLoopInput = Self::G1Prepared;
+    type G2MillerLoopInput = self::g2::G2MillerLoopInput<P>;
 
     fn multi_miller_loop(
         a: impl IntoIterator<Item = impl Into<Self::G1Prepared>>,
-        b: impl IntoIterator<Item = impl Into<Self::MillerLoopInput>>,
+        b: impl IntoIterator<Item = impl Into<Self::G2MillerLoopInput>>,
     ) -> MillerLoopOutput<Self> {
         P::multi_miller_loop(a, b)
     }

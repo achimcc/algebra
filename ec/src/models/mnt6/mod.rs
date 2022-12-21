@@ -212,11 +212,12 @@ impl<P: MNT6Config> Pairing for MNT6<P> {
     type G2Affine = G2Affine<P>;
     type G2Prepared = G2Prepared<P>;
     type TargetField = Fp6<P::Fp6Config>;
-    type MillerLoopInput = Self::G2Prepared;
+    type G1MillerLoopInput = Self::G1Prepared;
+    type G2MillerLoopInput = Self::G2Prepared;
 
     fn multi_miller_loop(
-        a: impl IntoIterator<Item = impl Into<Self::G1Prepared>>,
-        b: impl IntoIterator<Item = impl Into<Self::MillerLoopInput>>,
+        a: impl IntoIterator<Item = impl Into<Self::G1MillerLoopInput>>,
+        b: impl IntoIterator<Item = impl Into<Self::G2MillerLoopInput>>,
     ) -> MillerLoopOutput<Self> {
         let pairs = a
             .into_iter()

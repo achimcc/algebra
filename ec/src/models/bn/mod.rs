@@ -100,11 +100,12 @@ impl<P: BnConfig> Pairing for Bn<P> {
     type G2Affine = G2Affine<P>;
     type G2Prepared = G2Prepared<P>;
     type TargetField = Fp12<P::Fp12Config>;
-    type MillerLoopInput = Self::G2Prepared;
+    type G1MillerLoopInput = Self::G1Prepared;
+    type G2MillerLoopInput = Self::G2Prepared;
 
     fn multi_miller_loop(
-        a: impl IntoIterator<Item = impl Into<Self::G1Prepared>>,
-        b: impl IntoIterator<Item = impl Into<Self::MillerLoopInput>>,
+        a: impl IntoIterator<Item = impl Into<Self::G1MillerLoopInput>>,
+        b: impl IntoIterator<Item = impl Into<Self::G2MillerLoopInput>>,
     ) -> MillerLoopOutput<Self> {
         let mut pairs = a
             .into_iter()

@@ -155,3 +155,38 @@ impl<P: Bls12Config> G2HomProjective<P> {
         }
     }
 }
+
+#[derive(Clone, Debug)]
+pub enum G2MillerLoopInput<C: Bls12Config> {
+    Affine(G2Affine<C>),
+    Prepared(G2Prepared<C>),
+    Projective(G2Projective<C>),
+}
+
+impl<C: Bls12Config> From<G2Affine<C>> for G2MillerLoopInput<C> {
+    fn from(a: G2Affine<C>) -> G2MillerLoopInput<C> {
+        G2MillerLoopInput::Affine(a)
+    }
+}
+
+impl<C: Bls12Config> From<G2Projective<C>> for G2MillerLoopInput<C> {
+    fn from(a: G2Projective<C>) -> G2MillerLoopInput<C> {
+        G2MillerLoopInput::Projective(a)
+    }
+}
+
+impl<C: Bls12Config> From<G2Prepared<C>> for G2MillerLoopInput<C> {
+    fn from(a: G2Prepared<C>) -> G2MillerLoopInput<C> {
+        G2MillerLoopInput::Prepared(a)
+    }
+}
+
+impl<C: Bls12Config> From<G2MillerLoopInput<C>> for G2Prepared<C> {
+    fn from(input: G2MillerLoopInput<C>) -> Self {
+        match input {
+            G2MillerLoopInput::Affine(affine) => affine.into(),
+            G2MillerLoopInput::Projective(projective) => projective.into_affine().into(),
+            G2MillerLoopInput::Prepared(prepared) => prepared,
+        }
+    }
+}

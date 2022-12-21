@@ -81,28 +81,20 @@ pub trait Pairing: Sized + 'static + Copy + Debug + Sync + Send + Eq {
     /// The extension field that hosts the target group of the pairing.
     type TargetField: CyclotomicMultSubgroup;
 
-    type MillerLoopInput: Default
-        + Clone
-        + Send
-        + Sync
-        + Debug
-        + CanonicalSerialize
-        + CanonicalDeserialize
-        + for<'a> From<&'a Self::G2>
-        + for<'a> From<&'a Self::G2Affine>
-        + From<Self::G2>
-        + From<Self::G2Affine>;
+    type G1MillerLoopInput: From<Self::G1> + From<Self::G1Affine> + From<Self::G1Prepared> + Into<Self::G1Prepared>;
+
+    type G2MillerLoopInput: From<Self::G2> + From<Self::G2Affine> + From<Self::G2Prepared> + Into<Self::G2Prepared>;
 
     /// Computes the product of Miller loops for some number of (G1, G2) pairs.
     fn multi_miller_loop(
-        a: impl IntoIterator<Item = impl Into<Self::G1Prepared>>,
-        b: impl IntoIterator<Item = impl Into<Self::MillerLoopInput>>,
+        a: impl IntoIterator<Item = impl Into<Self::G1MillerLoopInput>>,
+        b: impl IntoIterator<Item = impl Into<Self::G2MillerLoopInput>>,
     ) -> MillerLoopOutput<Self>;
 
     /// Computes the Miller loop over `a` and `b`.
     fn miller_loop(
-        a: impl Into<Self::G1Prepared>,
-        b: impl Into<Self::MillerLoopInput>,
+        a: impl Into<Self::G1MillerLoopInput>,
+        b: impl Into<Self::G2MillerLoopInput>,
     ) -> MillerLoopOutput<Self> {
         Self::multi_miller_loop([a], [b])
     }
@@ -113,16 +105,16 @@ pub trait Pairing: Sized + 'static + Copy + Debug + Sync + Send + Eq {
 
     /// Computes a "product" of pairings.
     fn multi_pairing(
-        a: impl IntoIterator<Item = impl Into<Self::G1Prepared>>,
-        b: impl IntoIterator<Item = impl Into<Self::MillerLoopInput>>,
+        a: impl IntoIterator<Item = impl Into<Self::G1MillerLoopInput>>,
+        b: impl IntoIterator<Item = impl Into<Self::G2MillerLoopInput>>,
     ) -> PairingOutput<Self> {
         Self::final_exponentiation(Self::multi_miller_loop(a, b)).unwrap()
     }
 
     /// Performs multiple pairing operations
     fn pairing(
-        p: impl Into<Self::G1Prepared>,
-        q: impl Into<Self::MillerLoopInput>,
+        p: impl Into<Self::G1MillerLoopInput>,
+        q: impl Into<Self::G2MillerLoopInput>,
     ) -> PairingOutput<Self> {
         Self::multi_pairing([p], [q])
     }
@@ -358,37 +350,3 @@ pub fn prepare_g2<E: Pairing>(g: impl Into<E::G2Affine>) -> E::G2Prepared {
     let g: E::G2Affine = g.into();
     E::G2Prepared::from(g)
 }
-
-// pub enum MillerLoopInput<E: Pairing> {
-//     Affine(E::G2Affine),
-//     Prepared(E::G2Prepared),
-//     G2(E::G2),
-// }
-
-// impl<E: Pairing> From<E::G2Affine> for MillerLoopInput<E> {
-//     fn from(a: E::G2Affine) -> MillerLoopInput<E> {
-//         MillerLoopInput::Affine(a)
-//     }
-// }
-
-// impl<C: Bls12Config> From<G2Projective<C>> for MillerLoopInput<C> {
-//     fn from(a: G2Projective<C>) -> MillerLoopInput<C> {
-//         MillerLoopInput::Projective(a)
-//     }
-// }
-
-// impl<C: Bls12Config> From<G2Prepared<C>> for MillerLoopInput<C> {
-//     fn from(a: G2Prepared<C>) -> MillerLoopInput<C> {
-//         MillerLoopInput::Prepared(a)
-//     }
-// }
-
-// impl<C: Bls12Config> From<MillerLoopInput<C>> for G2Prepared<C> {
-//     fn from(input: MillerLoopInput<C>) -> Self {
-//         match input {
-//             MillerLoopInput::Affine(affine) => affine.into(),
-//             MillerLoopInput::Projective(projective) => projective.into_affine().into(),
-//             MillerLoopInput::Prepared(prepared) => prepared,
-//         }
-//     }
-// }
